@@ -149,7 +149,9 @@ func UseAlterConstraint() func(*Loader) error {
 		if !ok {
 			return fmt.Errorf("testfixtures: UseAlterConstraint is only valid for PostgreSQL databases")
 		}
+
 		pgHelper.useAlterConstraint = true
+
 		return nil
 	}
 }
@@ -158,9 +160,24 @@ func UseDisableTrigger() func(*Loader) error {
 	return func(l *Loader) error {
 		pgHelper, ok := l.helper.(*postgreSQL)
 		if !ok {
-			return fmt.Errorf("testfixtures: UseAlterConstraint is only valid for PostgreSQL databases")
+			return fmt.Errorf("testfixtures: UseDisableTrigger is only valid for PostgreSQL databases")
 		}
+
 		pgHelper.useDisableTrigger = true
+
+		return nil
+	}
+}
+
+func UseSchema(schema string) func(*Loader) error {
+	return func(l *Loader) error {
+		pgHelper, ok := l.helper.(*postgreSQL)
+		if !ok {
+			return fmt.Errorf("testfixtures: UseSchema is only valid for PostgreSQL databases")
+		}
+
+		pgHelper.schema = schema
+
 		return nil
 	}
 }

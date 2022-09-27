@@ -15,6 +15,7 @@ type postgreSQL struct {
 	skipResetSequences bool
 	resetSequencesTo   int64
 
+	schema                   string
 	tables                   []string
 	sequences                []string
 	nonDeferrableConstraints []pgConstraint
@@ -67,7 +68,7 @@ func (*postgreSQL) databaseName(q queryable) (string, error) {
 func (h *postgreSQL) tableNames(q queryable) ([]string, error) {
 	var tables []string
 
-	const sql = `
+	sql := `
 	        SELECT pg_namespace.nspname || '.' || pg_class.relname
 		FROM pg_class
 		INNER JOIN pg_namespace ON pg_namespace.oid = pg_class.relnamespace
@@ -76,6 +77,10 @@ func (h *postgreSQL) tableNames(q queryable) ([]string, error) {
 		  AND pg_namespace.nspname NOT LIKE 'pg_toast%'
 		  AND pg_namespace.nspname NOT LIKE '\_timescaledb%';
 	`
+	if h.schema != "" {
+		sql = fmt.Sprintf("%s AND pg_namespace.nspname = '%s'", sql, h.schema)
+	}
+
 	rows, err := q.Query(sql)
 	if err != nil {
 		return nil, err
