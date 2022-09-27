@@ -11,6 +11,7 @@ type postgreSQL struct {
 
 	useAlterConstraint bool
 	useDropConstraint  bool
+	useDisableTrigger  bool
 	skipResetSequences bool
 	resetSequencesTo   int64
 
@@ -316,7 +317,12 @@ func (h *postgreSQL) disableReferentialIntegrity(db *sql.DB, loadFn loadFunction
 	if h.useAlterConstraint {
 		return h.makeConstraintsDeferrable(db, loadFn)
 	}
-	return h.disableTriggers(db, loadFn)
+
+	if h.useDisableTrigger {
+		return h.disableTriggers(db, loadFn)
+	}
+
+	return nil
 }
 
 func (h *postgreSQL) resetSequences(db *sql.DB) error {

@@ -308,12 +308,11 @@ for PostgreSQL databases:
 
 #### With `DISABLE TRIGGER`
 
-This is the default approach. For that use:
 
 ```go
 testfixtures.New(
         ...
-        testfixtures.Dialect("postgres"), // or "timescaledb"
+        testfixtures.UseDisableTrigger(), // for postgres
 )
 ```
 
