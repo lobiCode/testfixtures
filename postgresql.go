@@ -75,7 +75,7 @@ func (h *postgreSQL) tableNames(q queryable) ([]string, error) {
 		WHERE pg_class.relkind = 'r'
 		  AND pg_namespace.nspname NOT IN ('pg_catalog', 'information_schema', 'crdb_internal')
 		  AND pg_namespace.nspname NOT LIKE 'pg_toast%'
-		  AND pg_namespace.nspname NOT LIKE '\_timescaledb%';
+		  AND pg_namespace.nspname NOT LIKE '\_timescaledb%'
 	`
 	if h.schema != "" {
 		sql = fmt.Sprintf("%s AND pg_namespace.nspname = '%s'", sql, h.schema)
@@ -237,6 +237,20 @@ func (h *postgreSQL) dropAndRecreateConstraints(db *sql.DB, loadFn loadFunction)
 	return tx.Commit()
 }
 
+func (h *postgreSQL) justLoad(db *sql.DB, loadFn loadFunction) (err error) {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+
+	if err = loadFn(tx); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
+}
+
 func (h *postgreSQL) disableTriggers(db *sql.DB, loadFn loadFunction) (err error) {
 	defer func() {
 		var b strings.Builder
@@ -327,7 +341,7 @@ func (h *postgreSQL) disableReferentialIntegrity(db *sql.DB, loadFn loadFunction
 		return h.disableTriggers(db, loadFn)
 	}
 
-	return nil
+	return h.justLoad(db, loadFn)
 }
 
 func (h *postgreSQL) resetSequences(db *sql.DB) error {
